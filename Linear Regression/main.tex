@@ -287,15 +287,19 @@
         \\
         \beta_{0} \displaystyle \sum x_{i} + \beta_{1} \displaystyle \sum x_{i}^2 = \displaystyle \sum x_{i} y_{i}
     \end{align}
-        
+    
     Using fomulars: 
     
      \begin{align} 
-        SXX = \Sigma (x_{i} - \overline{x})^2 = \Sigma x_{i}^2 - n\overline{x}^2 
-        \\
-        SXY = \Sigma (x_{i} - \overline{x})(y_{i} - \overline{y}) = \Sigma x_{i}y_{i} - n\overline{xy}
+        SXX &= \Sigma (x_{i} - \overline{x})^2 \\
+        &= \Sigma x_{i}^2 - 2 \Sigma x_{i} \overline{x} + n\overline{x}^2  \nonumber \\
+        &= \Sigma x_{i}^2 - 2 \Sigma x_{i} \dfrac{\Sigma x_{i}}{n} + n\dfrac{\Sigma x_{i} \Sigma x_{i}}{n^2}   \nonumber \\
+        &= \Sigma x_{i}^2 - \dfrac{\Sigma x_{i} \Sigma x_{i}}{n} \nonumber \\
+        &= \Sigma x_{i}^2 - n\dfrac{\Sigma x_{i} \Sigma x_{i}}{n n} \nonumber \\
+        &= \Sigma x_{i}^2 - n\overline{x}^2 \nonumber \\
+        SXY &= \Sigma (x_{i} - \overline{x})(y_{i} - \overline{y}) = \Sigma x_{i}y_{i} - n\overline{xy}
     \end{align}
-        
+    
     Solving (13), (14), we get:
     
     \begin{align} 
