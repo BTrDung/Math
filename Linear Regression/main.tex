@@ -297,15 +297,26 @@
         &= \Sigma x_{i}^2 - \dfrac{\Sigma x_{i} \Sigma x_{i}}{n} \nonumber \\
         &= \Sigma x_{i}^2 - n\dfrac{\Sigma x_{i} \Sigma x_{i}}{n n} \nonumber \\
         &= \Sigma x_{i}^2 - n\overline{x}^2 \nonumber \\
-        SXY &= \Sigma (x_{i} - \overline{x})(y_{i} - \overline{y}) = \Sigma x_{i}y_{i} - n\overline{xy}
+        SXY &= \Sigma (x_{i} - \overline{x})(y_{i} - \overline{y}) = \Sigma x_{i}y_{i} - n\overline{x}\overline{y}
     \end{align}
     
     Solving (13), (14), we get:
     
     \begin{align} 
-        \hat{\beta_{0}} = \overline{y} - \beta_{1}\overline{x}, 
-        \\
-        \hat{\beta_{1}} = \dfrac{SXY}{SXX}
+        \beta_{0} &n + \beta_{1} \Sigma x_{i} = \Sigma y_{i}                \nonumber \\
+        \beta_{0} &= \dfrac {\Sigma y}{n} - \beta_{1}  \dfrac {\Sigma x}{n} \nonumber \\
+        \beta_{0} &= \overline{y} - \beta_{1}  \overline{x}                 \\
+        \nonumber \\
+        \nonumber \\
+        \beta_{0} &\Sigma x_{i} + \beta_{1} \Sigma x_{i}^2 = \Sigma x_{i} y_{i} \nonumber \\
+        \beta_{1} &= \dfrac{\Sigma x_{i}y_{i} - \beta _{0} \Sigma x_{i} }{ \Sigma x_{i}^2} \nonumber \\
+        \beta_{1} &= \left ( \dfrac{\Sigma x_{i}y_{i}}{\Sigma x_{i}^2} - \dfrac{\Sigma x_{i} \Sigma y_{i}}{n \Sigma x_{i}^2} \right ) 
+        \dfrac{n \Sigma x_{i}^2}{n\Sigma x_{i}^2 - \Sigma x_{i} \Sigma x_{i}} \nonumber \\
+        \beta_{1} &= \left ( \Sigma x_{i}y_{i} - \dfrac{\Sigma x_{i} \Sigma y_{i}}{n} \right ) 
+        \dfrac{n}{n\Sigma x_{i}^2 - \Sigma x_{i} \Sigma x_{i}} \nonumber \\
+        \beta_{1} &= \dfrac{n \Sigma x_{i} y_{i} - \Sigma x_{i} \Sigma y_{i}}{n \Sigma x_{i}^2 - \Sigma x_{i} \Sigma x_{i}} \nonumber \\
+        \beta_{1} &= \dfrac{\Sigma x_{i} y_{i} - n \overline{x} \overline{y}}{n \Sigma x_{i}^2 - n \overline{x}^2} \nonumber \\
+        \beta_{1} &= \dfrac{SXY}{SXX}
     \end{align}
     
 \section {About Forbes' Data}
