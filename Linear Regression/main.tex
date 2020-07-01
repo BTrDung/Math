@@ -122,6 +122,7 @@
     This inconsistency is deliberate because in many regression situations, these statistics are not the estimates of population parameters. 
     
     To illustrate computations, we will use the Forbes’ data given in \textbf{Table 2.2}. In our analysis of these data, the response will be taken to be ${Lpres = 100log10}$ ${(Pressure)}$ and the predictor is Temp.
+    %We have used the values for these variables shown in \textbf{Table 2.2} to do the computations.
     
     \begin{center}
         \textbf{Table 2.2: Forbes’ 1857 Data on Boiling Point and Barometric Pressure for 17 Locations in the Alps and Scotland}
@@ -188,6 +189,7 @@
         RSS(\beta_{0}, \beta_{1}) = \displaystyle \sum _{i = 1} ^ {N}   |y_{i} - (\beta_{0} + \beta_{1} x_{i})| ^ 2
     \end{align}
     
+    %When evaluated at ${ \left ( \hat{\beta}_{0},{\hat{\beta}_{1}} \right)}$, 
     We call the quantity RSS${ \left (\hat{\beta}_{0},{\hat{\beta}_{1}} \right)}$ the \textit{residual sum of squares}, or just RSS.
     
     The least squares estimates can be derived in many ways, one of which is 
@@ -242,7 +244,9 @@
     \begin{align} 
         {e _{i}} = {y_{i}} - \beta_{0} + \beta_{1} 
     \end{align}
-   
+    
+    %Since the variance $\sigma^2$ is essentially the average squared size of the $e_{i}^2$ , we should expect that its estimator $\hat\sigma ^ 2$ is obtained by averaging the squared residuals. Under the assumption that the errors are uncorrelated random variables with zero means and common variance $\sigma ^ 2$, an unbiased estimate of $\sigma ^ 2$ is obtained by dividing $RSS$ = $\Sigma \hat{e}_{i}^2$ by its \textit{degrees of freedom} ($df$), where residual $df$ = number of cases minus the number of parameters in the mean function. For simple regression, residual $df$ $=$ $n - 2$, so the estimate of $\sigma ^ 2$ is given by
+    
     For simple regression, residual $df$ $=$ $n - 2$ (with $n$ = 17, the number of data we are using; $df$ = number of cases minus the number of parameters in the mean function and $df$ is denoted from \textit{degrees of freedom}), so the estimate of $\sigma ^ 2$ is given by
     
     \begin{align} 
@@ -267,8 +271,8 @@
         RSS(\beta_{0}, \beta_{1}) = \displaystyle \sum _{i = 1} ^ {N}   |y_{i} - (\beta_{0} + \beta_{1} x_{i})| ^ 2
     \end{align}
     
-    The method of finding the minimize is differentiate with respect to $\beta_{0}$ and $\beta_{1}$, and make it equal $0$. 
-    
+    The method of finding the minimum is differentiate with respect to $\beta_{0}$ and $\beta_{1}$, and make them equal $0$. 
+     
     \begin{align} 
         \dfrac{\partial RSS(\beta_{0}, \beta_{1}) }{\beta_{0}} = -2 \displaystyle \sum _{i=1}^{n}  (y_{i} - \beta_{0} - \beta_{1} x_{i}) = 0
         \\
@@ -313,12 +317,12 @@
         \beta_{1} &= \dfrac{\Sigma x_{i} y_{i} - n \overline{x} \overline{y}}{n \Sigma x_{i}^2 - n \overline{x}^2} \nonumber \\
         \beta_{1} &= \dfrac{SXY}{SXX}
     \end{align}
-    
+
 \section {About Forbes' Data}
     
     In an 1857 article, a Scottish physicist named James D. Forbes discussed a series of experiments that he had done concerning the relationship between atmospheric pressure and the boiling point of water. Forbes knew that the altitude could be determined from atmospheric pressure, measured with a barometer, with lower pressures corresponding to higher altitudes.
     
-    In the middle of the nineteenth century, barometers were fragile instruments, so Forbes wondered if a simpler measurement of the boiling point of water could work as a substitute for a direct reading of barometric pressure. He collected data from 17 locations in the Alps and Scotland. He measured each location pressure in inches of mercury with a barometer and boiling point in degrees Fahrenheit. Let’s take a look at the scatter plot. Here is the scatter plot. % WTF man? %
+    In the middle of the nineteenth century, barometers were fragile instruments, so Forbes wondered if a simpler measurement of the boiling point of water could work as a substitute for a direct reading of barometric pressure. He collected data from 17 locations in the Alps and Scotland. He measured each location pressure in inches of mercury with a barometer and boiling point in degrees Fahrenheit. Let’s take a look at the scatter plot. Here is the scatter plot.
     Of course we have to load the data first. After plotting the data, we add the best-fitting OLS line to the plot. This is the straight line that best fits the data according to the Ordinary Least Squares criterion, which we shall discuss in detail later.
     
 \section {Linear Regression's Estimation Methods}
