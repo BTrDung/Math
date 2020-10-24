@@ -1,0 +1,781 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{pgfplots}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{chngcntr}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{lipsum}
+
+
+\title{Logistic Regression}
+\author{TDung}
+\date{October 2020}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\counterwithin{equation}{section}
+
+\begin{document}
+
+\maketitle  
+
+\section{Introduction}
+    Regression methods have become popular in machine learning, data analysis, and statistics. We need to describe the relationship of the variable (response) Y and variables (explanatory variables) X which a data collected . Normally, we will have the output variables as discrete variables. Logistic Regression is the one.
+\section{Formula for logistic regression} 
+    First we have to know the difference of Linear Regression and Logistic Regression. That is, we have the outcome variable of the Logistic to be binary and dependent on the model's parameter choice and its assumptions. However, logistic regression will follow some basic rules used in linear regression. We will come with a small example as follows.
+    \\
+    Here is a small data taken from \url{https://en.wikipedia.org/wiki/Logistic_regression}. It is a group of students who spend 0 to 6 hours reviewing for each student's test and test results after the test.
+    \\
+    \begin{center} 
+        \begin{tabular}{|l|l|l|l|l|l|}
+        \hline
+        STT & X    & Y          & STT & X    & Y \\ \hline
+        1   & 0.5  & 0          & 11  & 2.75 & 1 \\ \hline
+        2   & 0.75 & 0          & 12  & 3    & 0 \\ \hline
+        3   & 1    & 0          & 13  & 3.25 & 1 \\ \hline
+        4   & 1.25 & 0          & 14  & 3.5  & 0 \\ \hline
+        5   & 1.5  & 0          & 15  & 4    & 1 \\ \hline
+        6   & 1.75 & 0          & 16  & 4.25 & 1 \\ \hline
+        7   & 1.75 & 1          & 17  & 4.5  & 1 \\ \hline
+        8   & 2    & 0          & 18  & 4.75 & 1 \\ \hline
+        9   & 2.25 & 1          & 19  & 5    & 1 \\ \hline
+        10  & 2.5  & 0          & 20  & 5.5  & 1 \\ \hline
+        \end{tabular}
+    \end{center}
+    \begin{center}
+    \usepgfplotslibrary{fillbetween}
+    \begin{tikzpicture}
+      \pgfplotsset{scale only axis,}
+        
+          \begin{axis}[
+            title={Figure 1.1: Example results for number of hours study},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    Here, if we pay close attention, we will see that if the number of study hours increases, the likelihood of that corresponding student passing the test will increase.
+
+    The first different point that we were concerned about the relationship between X and Y. One of the key to answering this question is the $E(Y | X)$, also called the expected value for each X In linear regression, we assume that $E$ will be calculated by:
+    \begin{equation} 
+        E(X | Y) = \beta_{0} + \beta_{1}x
+    \end{equation} 
+    The above expression is possible for all X of infinity for $E (X | Y)$.
+    \begin{equation} 
+        \lim_{x \to +\infty} = +\infty
+    \end{equation} 
+    \begin{equation} 
+        \lim_{x \to -\infty} = -\infty
+    \end{equation}
+    \\
+    For the data given above or the data related to logistic regression, the expected value must be greater than or equal to 0 and less than or equal to 1. However, a line $E (X | Y)$ is used above, the obtained values may be greater than 1 or less than 0 (eg with X = 20,…). With a logistic regression model of the data above, we need a curve where the lowest or highest value only progresses gradually towards 0 or 1. The curved is said to be “S-shape”. This means that the model used has logistic distribution.
+    \\
+    So we will replace the formula $E(Y | X)$ -  the expected value of Y with X values when using logistic distribution. The alternative formula is:
+    \begin{equation} 
+    \label {alternative f}
+        p(x; w) = \dfrac{1}{1 + e^{-(\beta_{0} + \beta_{1}x)}}
+    \end{equation}
+    The second difference is the conditional distribution of the logistic regression output value. In linear regression we have $Y = E + e$ ( e is called error), e is the difference value of predicted values with the actual average value, usually $e$ obey normal distribution with a mean value equal to $0$. It is a constant variance after estimated based on given data. For logistic regression we have $y = p(x; w)  + e$. When $y = 1$ we have $e = 1 - p(x; w)$ with  probability $p(x; w)$ and $y = 0$ we have $e = -p(x; w)$ with probability $1 - p(x;w)$. Variance is equal to $p(x; w) (1 - p(x;w))$.
+    
+\section {Calculating model} 
+    To select a good model for logistic regression, we must estimate the beta parameters based on given data. 
+    \\
+    For the linear regression model, we will estimate the beta parameter by using the derivative of the residual sum of square for each parameter to get the best model. However, using this way to approach the model of logistic regression is not possible. Therefore, we will use the likelihood function method to approach this model. The method of maximum likelihood of value for the unknown parameters that maximize the probability of the observed set of data. This function expresses the probability of the observed data as a function of the unknown parameters. The maximum likelihood estimators of the parameters are the values that maximize this function.
+    \begin{equation} 
+        \label{MLE}
+        p(x_{i};w)^{y_{i}}(1 - p(x_{i}; w))^{1 - y_{i}}
+    \end{equation}
+    It can be known that if the outcome variable equal $1$, we will have $p(x_{i}; w)$ and $1 - p(x_{i}; w)$ for the outcome variable equal zero. Thus, likelihood function is product of the terms given $\ref{MLE}$: 
+    \begin{equation} 
+        \label{PMLE}
+        l(\beta) = \prod_{i=1}^{M} p(x_{i}; w)^{y_{i}}(1 - p(x_{i}; w))^{1 - y_{i}}
+    \end{equation}
+    But it is easier mathematically to work with the log of equation $\ref{PMLE}$ - called the log-likelihood: 
+    \begin{equation} 
+        \label{LLH}
+        L(\beta) = \ln(l(\beta)) = \sum_{i=1}^{M} (y_{i}\ln[p(x_{i}; w)] + (1 - y_{i})\ln[1 -  p(x_{i}; w)])
+    \end{equation}
+    To find the value of $\beta$ that maximizes $L(\beta)$ we differentiate $L(\beta)$ with respect to $\beta_{0}$ and $\beta_{1}$ and set the resulting expressions equal to zero. These equations known as the likelihood function: 
+    \begin{equation} 
+        \label{ELF1}
+        \sum \left[y_{i} -  p(x_{i}; w) \right]  = 0
+    \end{equation} 
+    And
+    \begin{equation} 
+        \label{ELF2}
+        \sum x_{i}  \left[y_{i} -  p(x_{i}; w) \right]  = 0
+    \end{equation}
+    For logistic regression, the formula $\ref{ELF1}$ and $\ref{ELF2}$ is nonlinear with parameters of model. To estimate these parameters, we will some special method is mentioned in the last section. \\
+    With the method is calculated in last section, we have: 
+    \\ 
+    \begin{center}
+        \begin{tabular}{|c|c|c|c|c|c|c|}
+        \hline
+           & Coeff    & S.e      & Z        & Lower    & Upper    & p-value  \\ \hline
+        $\beta_{0}$ & -4.07723 & {-1.74428} & -2.33748 & -7.49596 & -0.65850 & 0.019414 \\ \hline
+        $\beta_{1}$ & 1.50445  & {0.62159}  & 2.42031  & 0.28615  & 2.72274  & 0.015507 \\ \hline
+        \end{tabular}
+    \end{center}
+    The maximum likelihood estimates of $\beta_{0}$ and $\beta_{1}$ are $\hat\beta_{0} = -4.07723$ and $\hat\beta_{1} =  1.50445$. The fitted values are given by the equation $\ref{alternative f}$
+    \begin{equation} 
+         p(x; b, w) = \dfrac{1}{1 + e^{-(-4.07723 + 1.50445\dot x)}}
+    \end{equation}
+    
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Figure 3.7: Simulate the curve of probability},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-4.07773 +  1.50445*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    
+\section {Testing the significance of the coefficients} 
+    The comparison of observed to predicted values using the likelihood function is based on the following expression:
+    \begin{equation} 
+        \label{eD}
+        D = -2\ln\left[\dfrac{\text{likelihood of the fitted model}}{\text{likelihood of the saturated model}} \right]
+    \end{equation}
+    \\
+    Using $\ref{LLH}$ and $\ref{eD}$ becomes, 
+    \\
+    \begin{equation} 
+        \label{eDS}
+        D = -2 \sum_{i=1}^{M} \left[y_{i}\ln\left(\dfrac{\hat{p}_{i}}{y_{i}} \right) + (1 - y_{i})\ln\left(\dfrac{1 - \hat{p}_{i}}{1 - y_{i}} \right)\right]
+    \end{equation}
+    The formula of D in $\ref{eDS}$ is called deviance for logistic regression (it has the same role of RSS - residual sum of square in linear regression).
+    \\ 
+    If we try to calculate $l(\text{saturated model})$ bases on table described in section 2, we can see  ${l(\text{saturated model}) = 1}$
+    \\
+    \begin{equation} 
+         l(\text{saturated model}) = \prod_{i=1}^{M} {y_{i}}^{y_{i}} (1 - y_{i})^{(1 - y_{i})} = 1.0
+    \end{equation}
+    Thus, we can set the formula for D is: 
+    \begin{equation} 
+        D = -2\ln(\text{likelihood of the fitted model})
+    \end{equation} 
+    To calculate significance of an independent variable, we usually compare D with and without the independent variable in the equation. 
+    \begin{equation} 
+        G = D(\text{without the variable} ) - D(\text{with the variable})
+    \end{equation} 
+    Or it can be written: 
+    \begin{equation} 
+        \label{eG}
+        G   = -2\ln\left(\dfrac{\text{likelihood without the variable}}{\text{likelihood with the variable}}\right)
+    \end{equation} 
+    Let denote $M_{1} = \sum_{i=1}^{M} y_{i}$ and $M_{0} = \sum_{i=1}^{M} (1 - y_{i})$, from $\ref{eG}$, we have: 
+    \begin{equation} 
+        G = -2 \ln \left[ \dfrac{\left(\dfrac{M_{1}}{M}\right)^{M_{1}}\left(\dfrac{M_{0}}{M}\right)^{M_{0}} }{\prod_{i=1}^{M} {\hat{p}_{i}}^{y_{i}} (1 - \hat{p_{i}})^{1 - \hat{p_{i}}}}\right]
+    \end{equation}
+    For the data given, we can calculate the value of $G = 13.66613029$
+        
+    
+\section {Confidence interval estimation}
+    The standard error of $\beta_{0}$ is SE($\beta_{0}$). Hence a (1 - $\alpha$) x 100 $\%$ confidence interval for $\beta_{0}$  is the set of points $\beta_{0}$ in the interval
+    \begin{equation} 
+        \beta_{0} - z_{1 - \alpha/2}SE(\beta_{0}) \le \beta_{0} \le \beta_{0} + z_{1 - \alpha/2}SE(\beta_{0})
+    \end{equation}
+    For $\beta_{1}$
+    \begin{equation} 
+        \beta_{1} - z_{1 - \alpha/2}SE(\beta_{1}) \le \beta_{1} \le \beta_{1} + z_{1 - \alpha/2}SE(\beta_{1})
+    \end{equation}
+    Where $z_{1 - \alpha / 2}$ is the upper $100 \left(1 - \alpha / 2 \right)\%$ point from the standard normal distribution. 
+    \\
+    For $95\%$ confident interval of $\beta_{0}$ we have z = 1.96 (Find it in normal distribution table): 
+    \begin{align} 
+        -4.07723 - (1.96 * -1.74428) \le&\beta_{0}\le -4.07723 + (1.96 * -1.74428)
+        \nonumber \\
+        -4.07723 - 3.4187888 \le&\beta_{0}\le -4.07723 + 3.4187888
+        \nonumber \\
+        -7.4960188 \le&\beta_{0}\le -0.6584412 \nonumber \\
+    \end{align}
+    
+    Similar for $\beta_{1}$ we have $0.28615 \le &\beta_{1} \le 2.722742$.
+    
+\section {Estimate parameters by gradient descent}
+    To estimate parameters of model, we will use Stochastic Gradient Descent. As mentioned on section 3, the formula of log likelihood function is: 
+    \begin{equation} 
+         L(\beta) = \ln(l(\beta)) = \sum_{i=1}^{M} \left(y_{i}\ln[p(x_{i}; w)] + (1 - y_{i})\ln[1 -  p(x_{i}; w)]\right)
+    \end{equation} 
+    But here, we will put "-1" in front of the right equation and make it be loss function. It called negative log likelihood function.
+    \begin{equation} 
+        L(\beta) = \ln(l(\beta)) = - \sum_{i=1}^{M} \left(y_{i}\ln[p(x_{i}; w)] + (1 - y_{i})\ln[1 -  p(x_{i}; w)]\right)
+    \end{equation} 
+    For any pair $(x_{i}, y_{i})$ in data set, we have: 
+    \begin{equation} 
+            J(w; x_{i}, y_{i}) = -\left(y_{i}\ln \left[p(x_{i}; w)\right] + (1 - y_{i})\ln \left[1 -  p(x_{i}; w)\right]\right)
+    \end{equation}
+    With derivatives
+    \begin{align} 
+        \dfrac{\partial J(w; x_{i}, y_{i})}{\partial w} &= - \left(
+        \dfrac{y_{i}}{p(x_{i}; w)} - \dfrac{1 - y_{i}}{1 - p(x_{i}; w)} \right) \dfrac{\partial p(x_{i}; w)}{\partial w}
+        \nonumber
+        \\
+        &= \left(p(x_{i}; w) - y_{i}\right)x_{i}
+    \end{align} 
+    The formula to update $W$ for logistic regression is: 
+    \begin{equation}
+        w = w + \eta(y_{i} - p(x_{i}; w))x_{i}
+    \end{equation}
+    In here, we will set $\eta = 0.05$ (choosing learning rate $\eta$ is very importance for a model).
+    \newpage 
+    
+    \begin{multicols}{2}
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 10},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-0.15393527 +  0.23459561*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 100},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-0.23719834 +  0.28256593*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    \end{multicols}
+    
+    \begin{multicols}{2}
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 500},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-1.87760692 +  0.7787405*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    
+    
+    
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 1000},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-2.69566655 +  1.04370902*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    \end{multicols}
+    
+    \newpage
+    
+    \begin{multicols}{2}
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 10000},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-4.07560964 + 1.50393375*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    
+    
+    \begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 100000},
+            xlabel=hours studying,
+            ylabel=fail(0) / pass(1),
+          ]
+          
+            \addplot [color=green, domain=0:6, mark=none] 
+            {1 / (1 + e^(-(-4.07772135 +  1.50464858*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+                (0.5, 0)(0.75, 0)(1, 0)(1.25, 0)(1.5, 0)
+                (1.75, 0)(2, 0)(2.5, 0)(3, 0)(3.5, 0)
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               (1.75, 1)(2.25, 1)(2.75, 1)(3.25, 1)(4, 1)(4.25, 1)(4.5, 1)(4.75, 1)(5, 1)(5.5, 1)
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+    \end{multicols}
+\section {Source code for estimating parameters} 
+    \begin{lstlisting}[language=Python, caption=Source code for sample 1]
+        import numpy as np
+        import pandas as pd
+        import time
+        
+        
+        START_TIME = time.time()
+        # ------------------------------------------------------------------
+        
+        DATA_FILE_NAME = 'RESULT_EXAM_STUDY.csv'
+        ITERATION = 100000
+        ALPHA = 0.05 
+        
+        
+        def load_data():
+            df = pd.read_csv(DATA_FILE_NAME)
+            X = df.values[:, 0: 1]
+            y = df.values[:, 1]
+            m = y.size
+        
+            X = np.concatenate((np.ones((m, 1)), X.reshape(-1, 1)), axis=1)
+            return X, y
+        
+        
+        def sigmoid(z):
+            return 1 / (1 + np.exp(-z))
+        
+        
+        def gradient_descent(X, y, theta, alpha, inter):
+            m = y.size
+            for _ in range(0, ITERATION):
+                theta = theta - ALPHA * (np.dot(x.T, sigmoid(np.dot(x, theta)) - y)) / m
+            return theta
+        
+        
+        x, y = load_data()
+        theta = gradient_descent(x, y, np.zeros(x.shape[1], ), ALPHA, ITERATION)
+        print(theta)
+        
+        # ------------------------------------------------------------------
+        
+        END_TIME = time.time()
+        print(f"Runtime of the program is {END_TIME - START_TIME}")
+    \end{lstlisting}
+    
+\section{Practice model in more data set} 
+First, we will try model with new data set is blowBF.txt (M = 659) given. 
+
+\begin{multicols}{2}
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 10},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+          
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-0.05122921 - 0.08258544*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+    \end{center}
+
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 100},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+          
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-0.26732176 -0.04537114*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+\end{center}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 1000},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+          
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-1.99366535 + 0.48338663*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+\end{center}
+
+
+
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.05, Iter = 10000},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+          
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-7.02925704 + 2.00378478*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+\end{center}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.001, Iter = 100000},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-3.34732026 + 0.89447934*x)))};
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+\end{center}
+
+
+
+\begin{center}
+    \begin{tikzpicture}
+          \begin{axis}[
+            title={Alpha = 0.001, Iter = 1000000},
+            xlabel= Log(Diameter),
+            ylabel= Blowndown indicator,
+          ]
+          
+            \addplot [color=green, domain=1:6, mark=none] 
+            {1 / (1 + e^(-(-7.74943842 + 2.219757*x)))};
+            
+            \addplot[color = red,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 4.45943 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.90689 , 0.0 )( 4.08746 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.5849599999999997 , 0.0 )( 4.16993 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 4.08746 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 4.64386 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 4.24793 , 0.0 )( 4.08746 , 0.0 )( 3.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.70044 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 4.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 4.85798 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 4.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.70044 , 0.0 )( 3.70044 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.70044 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.70044 , 0.0 )( 3.5849599999999997 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 3.0 , 0.0 )( 3.80735 , 0.0 )( 3.0 , 0.0 )( 3.4594300000000002 , 0.0 )( 2.80735 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 4.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 4.08746 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.2479299999999998 , 0.0 )( 4.32193 , 0.0 )( 3.0 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.0 , 0.0 )( 3.0 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.1699200000000003 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.0 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 3.3219300000000005 , 0.0 )( 4.52356 , 0.0 )( 3.4594300000000002 , 0.0 )( 3.1699200000000003 , 0.0 )( 3.3219300000000005 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 2.32193 , 0.0 )( 3.0 , 0.0 )( 2.45943 , 0.0 )( 3.5849599999999997 , 0.0 )( 2.80735 , 0.0 )( 2.5849599999999997 , 0.0 )( 3.3219300000000005 , 0.0 )( 3.0 , 0.0 )( 3.39232 , 0.0 )( 2.80735 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.5849599999999997 , 0.0 )( 2.32193 , 0.0 )
+            }; \label{plot_one}
+            
+            \addplot[color = blue,only marks, mark=o]
+            coordinates{ % plot 1 data set
+               ( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.39232 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.80735 , 1.0 )( 2.32193 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.39232 , 1.0 )( 3.0 , 1.0 )( 3.80735 , 1.0 )( 2.90689 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.90689 , 1.0 )( 2.80735 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.0 , 1.0 )( 4.52356 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 2.32193 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 2.80735 , 1.0 )( 3.70044 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.85798 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.70044 , 1.0 )( 3.90689 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 2.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.0 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.52356 , 1.0 )( 3.75489 , 1.0 )( 3.90689 , 1.0 )( 4.0 , 1.0 )( 3.0 , 1.0 )( 2.80735 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.08746 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.45943 , 1.0 )( 2.80735 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 4.2854 , 1.0 )( 4.32193 , 1.0 )( 3.75489 , 1.0 )( 3.80735 , 1.0 )( 3.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.70044 , 1.0 )( 3.80735 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.08746 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 4.08746 , 1.0 )( 4.58496 , 1.0 )( 3.0 , 1.0 )( 3.70044 , 1.0 )( 4.80735 , 1.0 )( 3.52356 , 1.0 )( 3.52356 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 4.24793 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.45943 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 2.5849599999999997 , 1.0 )( 3.0 , 1.0 )( 4.64386 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.80735 , 1.0 )( 4.24793 , 1.0 )( 4.32193 , 1.0 )( 4.0 , 1.0 )( 2.80735 , 1.0 )( 4.08746 , 1.0 )( 4.32193 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 3.90689 , 1.0 )( 4.16993 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.5849599999999997 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.2479299999999998 , 1.0 )( 3.90689 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.0874599999999996 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.70044 , 1.0 )( 3.39232 , 1.0 )( 4.16993 , 1.0 )( 4.0 , 1.0 )( 3.1699200000000003 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 4.16993 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.3219300000000005 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.1699200000000003 , 1.0 )( 2.80735 , 1.0 )( 4.49185 , 1.0 )( 4.24793 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.0 , 1.0 )( 4.16993 , 1.0 )( 3.70044 , 1.0 )( 2.70044 , 1.0 )( 3.80735 , 1.0 )( 3.70044 , 1.0 )( 3.70044 , 1.0 )( 4.16993 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.0 , 1.0 )( 5.0 , 1.0 )( 2.32193 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.32193 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 4.7548900000000005 , 1.0 )( 4.08746 , 1.0 )( 3.5849599999999997 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.90689 , 1.0 )( 3.90689 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.80735 , 1.0 )( 3.80735 , 1.0 )( 4.32193 , 1.0 )( 3.70044 , 1.0 )( 3.4594300000000002 , 1.0 )( 3.3219300000000005 , 1.0 )( 4.16993 , 1.0 )( 4.39232 , 1.0 )( 2.45943 , 1.0 )( 4.39232 , 1.0 )( 4.0 , 1.0 )( 3.80735 , 1.0 )( 3.1699200000000003 , 1.0 )( 4.08746 , 1.0 )( 3.0 , 1.0 )
+            }; \label{plot_two}
+          \end{axis}
+    \end{tikzpicture}
+\end{center}
+\end{multicols}
+ 
+If we look at the last two graphs, we can see that with the coefficient alpha = 0.001, with the number of training times equal to 100000 (10 times the alpha of 0.05 to find the almost optimal solution), we almost no optimal solution yet. And to get a perfect curve as shown in graph $4^{th}$ (the second row on the right), we need 1000000 training times. 
+\\
+Second, we will come up with data that has two parameters need to estimate.
+
+\begin{multicols}{2}
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 10}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-0.0006543+0.00643771*x+0.00068269*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center} 
+
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 100}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-0.00691168 + 0.01046144*x + 0.00049527*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center} 
+\end{multicols}{2}
+
+
+\begin{multicols}{2}
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 1000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-0.06946097+0.01090733*x+0.00099135*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center} 
+
+
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 10000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-0.66896603+0.0150915*x+0.00566237*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center}
+\end{multicols} 
+
+
+
+\begin{multicols}{2}
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 100000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-4.81180027+0.04528064*x+ 0.03819149*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center}
+
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 200000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-7.45017822 + 0.06550395*x +  0.05898701*y))};
+    \end{axis}
+  \end{tikzpicture} 
+\end{center}
+\end{multicols}
+
+\newpage 
+
+\begin{multicols}{2}
+
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 1000000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-15.39517866 + 0.12825989*x + 0.12247929*y))};
+    \end{axis}
+  \end{tikzpicture} 
+
+    
+    
+  \begin{tikzpicture}
+    \begin{axis}[title={Alpha = 0.001, Iter = 10000000}, domain=30:100, domain=30:100, xlabel = x, ylabel = y ]
+    \addplot3[color = blue,only marks, mark=o]
+            coordinates{( 34.62365962451697 , 78.0246928153624 , 0 )( 30.28671076822607 , 43.894997524001006 , 0 )( 35.84740876993872 , 72.90219802708364 , 0 )( 45.083277476683385 , 56.316371781530506 , 0 )( 95.86155507093572 , 38.22527805795094 , 0 )( 75.01365838958247 , 30.60326323428011 , 0 )( 39.538339143672225 , 76.0368108511588 , 0 )( 67.94685547711617 , 46.67857410673128 , 0 )( 67.37202754570876 , 42.83843832029179 , 0 )( 50.534788289883004 , 48.85581152764205 , 0 )( 34.21206097786789 , 44.209528598662885 , 0 )( 93.114388797442 , 38.80067033713209 , 0 )( 61.83020602312595 , 50.25610789244621 , 0 )( 38.78580379679423 , 64.99568095539578 , 0 )( 52.10797973193984 , 63.127623768817145 , 0 )( 40.236893735451105 , 71.16774802184875 , 0 )( 54.63510555424817 , 52.21388588061123 , 0 )( 33.91550010906887 , 98.86943574220612 , 0 )( 74.78925295941542 , 41.57341522824434 , 0 )( 34.1836400264419 , 75.2377203360134 , 0 )( 51.54772026906181 , 46.85629026349976 , 0 )( 82.36875375713919 , 40.61825515970618 , 0 )( 51.04775177128865 , 45.82270145776001 , 0 )( 62.222675761201884 , 52.060991948366784 , 0 )( 34.52451385320009 , 60.39634245837173 , 0 )( 50.286496118990705 , 49.80453881323059 , 0 )( 49.58667721632031 , 59.80895099453265 , 0 )( 32.57720016809309 , 95.59854761387876 , 0 )( 35.28611281526193 , 47.02051394723416 , 0 )( 56.253817497116245 , 39.261472510580184 , 0 )( 30.05882244669796 , 49.59297386723685 , 0 )( 44.66826172480893 , 66.45008614558913 , 0 )( 66.56089447242954 , 41.09209807936973 , 0 )( 49.07256321908844 , 51.88321182073966 , 0 )( 32.722833040603234 , 43.307173064300635 , 0 )( 60.45555629271532 , 42.50840943572217 , 0 )( 82.2266615778557 , 42.719878537164576 , 0 )( 42.0754545384731 , 78.84478600148044 , 0 )( 52.34800398794108 , 60.76950525602592 , 0 )( 55.48216114069585 , 35.570703472288656 , 0 )};
+        \addplot3[color = red,only marks, mark=o]
+            coordinates{( 60.18259938620975 , 86.30855209546827 , 1 )( 79.0327360507101 , 75.3443764369103 , 1 )( 61.10666453684766 , 96.51142588489624 , 1 )( 75.02474556738889 , 46.55401354116538 , 1 )( 76.09878670226256 , 87.42056971926803 , 1 )( 84.43281996120034 , 43.533393310721095 , 1 )( 82.3070533739948 , 76.48196330235605 , 1 )( 69.36458875970939 , 97.71869196188608 , 1 )( 53.9710521485623 , 89.20735013750205 , 1 )( 69.07014406283025 , 52.740469730167646 , 1 )( 70.66150955499434 , 92.92713789364832 , 1 )( 76.97878372747499 , 47.575963649755316 , 1 )( 89.67677575072081 , 65.79936592745237 , 1 )( 77.9240914545704 , 68.9723599933059 , 1 )( 62.27101367004632 , 69.95445795447587 , 1 )( 80.19018075095659 , 44.821628932183536 , 1 )( 61.379289447425 , 72.80788731317097 , 1 )( 85.40451939411645 , 57.05198397627122 , 1 )( 52.04540476831827 , 69.43286012045222 , 1 )( 64.17698887494485 , 80.90806058670817 , 1 )( 83.90239366249155 , 56.30804621605328 , 1 )( 94.44336776917852 , 65.56892160559052 , 1 )( 77.19303492601364 , 70.4582000018096 , 1 )( 97.7715992800023 , 86.7278223300282 , 1 )( 62.073063796676465 , 96.76882412413984 , 1 )( 91.56497449807442 , 88.69629254546598 , 1 )( 79.94481794066932 , 74.16311935043757 , 1 )( 99.2725269292572 , 60.99903099844988 , 1 )( 90.5467141139985 , 43.39060180650027 , 1 )( 97.64563396007769 , 68.86157272420604 , 1 )( 74.24869136721598 , 69.82457122657193 , 1 )( 71.7964620586338 , 78.45356224515052 , 1 )( 75.39561146568029 , 85.75993667331619 , 1 )( 40.45755098375164 , 97.53518548909935 , 1 )( 80.27957401466998 , 92.11606081344084 , 1 )( 66.74671856944039 , 60.99139402740989 , 1 )( 64.0393204150601 , 78.03168802018232 , 1 )( 72.34649422579923 , 96.22759296761404 , 1 )( 60.4578857391896 , 73.09499809758037 , 1 )( 58.840956217268015 , 75.85844831279043 , 1 )( 99.82785779692128 , 72.36925193383884 , 1 )( 47.26426910848174 , 88.47586499559782 , 1 )( 50.45815980285988 , 75.80985952982456 , 1 )( 88.91389641665329 , 69.80378889835472 , 1 )( 94.83450672430195 , 45.69430680250754 , 1 )( 67.31925746917527 , 66.58935317747915 , 1 )( 57.238706315698614 , 59.51428198012957 , 1 )( 80.36675600171273 , 90.96014789746954 , 1 )( 68.46852178591112 , 85.59430710452014 , 1 )( 75.47770200533905 , 90.42453899753963 , 1 )( 78.6354243489802 , 96.64742716885642 , 1 )( 94.09433112516793 , 77.15910509073893 , 1 )( 90.44855097096365 , 87.50879176484702 , 1 )( 74.49269241843041 , 84.84513684930135 , 1 )( 89.8458067072098 , 45.35828361091658 , 1 )( 83.48916274498238 , 48.38028579728175 , 1 )( 42.261700809981704 , 87.10385094025456 , 1 )( 99.31500880510393 , 68.77540947206617 , 1 )( 55.34001756003703 , 64.9319380069486 , 1 )( 74.77589300092767 , 89.52981289513276 , 1 )};
+           \addplot3[surf] {1 / (1 + exp(-(-24.73684959  + 0.2028365*x +0.19803678*y))};
+    \end{axis}
+  \end{tikzpicture} 
+    
+\end{multicols}
+
+If we pay attention into the last two graphs, we can see the curvature is down very quickly. This means that the different probability between the two 0 and 1 becomes more clearly. This phenomenon is called over-fitting and can be minimized with the following formula:
+
+\begin{equation} 
+    w = w + \eta(y_{i} - p(x_{i}; w))x_{i} + \dfrac{\lambda}{m} w
+\end{equation}
+
+Where lambda is a constant. We add the formula $\dfrac {\lambda} {m} w$ as a penalty, the bigger the error, the higher the penalty and the smaller the error, the lower the penalty.
+
+\section{References}
+\url{https://en.wikipedia.org/wiki/Logistic_regression}
+\\
+\url{https://machinelearningcoban.com/2017/01/12/gradientdescent/}
+\\
+\url{https://machinelearningcoban.com/2017/01/27/logisticregression/}
+\\
+\url{https://www.kaggle.com/msjaiclub/2classclassification/version/1}
+\\
+\url{http://users.stat.umn.edu/~sandy/alr3ed/website/data/blowdown.txt}
+\\
+\url{https://www.math.arizona.edu/~rsims/ma464/standardnormaltable.pdf}
+\end{document}
