@@ -56,7 +56,7 @@
 
 \section{Introduction}
     Regression methods have become popular in machine learning, data analysis, and statistics. We need to describe the relationship of the variable (response) Y and variables (explanatory variables) X which a data collected . Normally, we will have the output variables as discrete variables. Logistic Regression is the one.
-\section{Formula for logistic regression} 
+\section{Formula For Logistic Regression} 
     First we have to know the difference of Linear Regression and Logistic Regression. That is, we have the outcome variable of the Logistic to be binary and dependent on the model's parameter choice and its assumptions. However, logistic regression will follow some basic rules used in linear regression. We will come with a small example as follows.
     \\
     Here is a small data taken from \url{https://en.wikipedia.org/wiki/Logistic_regression}. It is a group of students who spend 0 to 6 hours reviewing for each student's test and test results after the test.
@@ -124,7 +124,7 @@
     \end{equation}
     The second difference is the conditional distribution of the logistic regression output value. In linear regression we have $Y = E + e$ ( e is called error), e is the difference value of predicted values with the actual average value, usually $e$ obey normal distribution with a mean value equal to $0$. It is a constant variance after estimated based on given data. For logistic regression we have $y = p(x; w)  + e$. When $y = 1$ we have $e = 1 - p(x; w)$ with  probability $p(x; w)$ and $y = 0$ we have $e = -p(x; w)$ with probability $1 - p(x;w)$. Variance is equal to $p(x; w) (1 - p(x;w))$.
     
-\section {Calculating model} 
+\section {Calculating Model} 
     To select a good model for logistic regression, we must estimate the beta parameters based on given data. 
     \\
     For the linear regression model, we will estimate the beta parameter by using the derivative of the residual sum of square for each parameter to get the best model. However, using this way to approach the model of logistic regression is not possible. Therefore, we will use the likelihood function method to approach this model. The method of maximum likelihood of value for the unknown parameters that maximize the probability of the observed set of data. This function expresses the probability of the observed data as a function of the unknown parameters. The maximum likelihood estimators of the parameters are the values that maximize this function.
@@ -193,7 +193,7 @@
     \end{tikzpicture}
     \end{center}
     
-\section {Testing the significance of the coefficients} 
+\section {Testing The Significance Of The Coefficients} 
     The comparison of observed to predicted values using the likelihood function is based on the following expression:
     \begin{equation} 
         \label{eD}
@@ -233,7 +233,7 @@
     For the data given, we can calculate the value of $G = 13.66613029$
         
     
-\section {Confidence interval estimation}
+\section {Confidence Interval Estimation}
     The standard error of $\beta_{0}$ is SE($\beta_{0}$). Hence a (1 - $\alpha$) x 100 $\%$ confidence interval for $\beta_{0}$  is the set of points $\beta_{0}$ in the interval
     \begin{equation} 
         \beta_{0} - z_{1 - \alpha/2}SE(\beta_{0}) \le \beta_{0} \le \beta_{0} + z_{1 - \alpha/2}SE(\beta_{0})
@@ -252,10 +252,10 @@
         \nonumber \\
         -7.4960188 \le&\beta_{0}\le -0.6584412 \nonumber \\
     \end{align}
-    
+    \\
     Similar for $\beta_{1}$ we have $0.28615 \le \beta_{1} \le 2.722742$.
     
-\section {Estimate parameters by gradient descent}
+\section {Estimate Parameters By Gradient Descent}
     To estimate parameters of model, we will use Stochastic Gradient Descent. As mentioned on section 3, the formula of log likelihood function is: 
     \begin{equation} 
          L(\beta) = \ln(l(\beta)) = \sum_{i=1}^{M} \left(y_{i}\ln[p(x_{i}; w)] + (1 - y_{i})\ln[1 -  p(x_{i}; w)]\right)
@@ -443,7 +443,7 @@
     \end{tikzpicture}
     \end{center}
     \end{multicols}
-\section {Source code for estimating parameters} 
+\section {Source Code For Estimating Parameters} 
     \begin{lstlisting}[language=Python, caption=Source code for sample 1]
         import numpy as np
         import pandas as pd
@@ -489,7 +489,7 @@
         print(f"Runtime of the program is {END_TIME - START_TIME}")
     \end{lstlisting}
     
-\section{Practice model in more data set} 
+\section{Practice Model In More Data Set} 
 First, we will try model with new data set is blowBF.txt (M = 659) given. 
 
 \begin{multicols}{2}
